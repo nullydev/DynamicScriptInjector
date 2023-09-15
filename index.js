@@ -2,77 +2,54 @@ const express = require('express');
 const axios = require('axios');
 const app = express();
 const port = 3000;
-app.get('/', async (req, res) => {
-  try {
-    const externalUrl = req.query.src; // Get the URL from the query parameter
-    const response = await axios.get(externalUrl); // Fetch the external JavaScript file
 
-    // Set the response content type to JavaScript
-    res.setHeader('Content-Type', 'application/javascript');
-    
-    // Send the fetched JavaScript content as the response
-    res.send(response.data.replace('\\f113', "url(https://cdn.discordapp.com/emojis/1150109708338864218.webp?size=24&quality=lossless)"));
-  } catch (error) {
-    console.error(error);
-    const page = `
-    <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-    </head>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:100,300" />
-    <div id="main">
-        <div class="fof">
-            <h1>Error 404</h1>
-        </div>
-    </div>
-    <style>
-    * {
-        transition: all 0.6s;
-    }
+// ✔️ Path example: http://localhost:3000/?src=https://cdn.jsdelivr.net/npm/eruda
+// ❌ Path example: http://localhost:3000/?src=https://cdn.jsdelivr.net/npm/eruda
+app.get('/:type?', handleRequestAndRespond);
 
-    html {
-        height: 100%;
-    }
-
-    body {
-        font-family: "Lato", sans-serif;
-        color: #888;
-        margin: 0;
-    }
-
-    #main {
-        display: table;
-        width: 100%;
-        height: 100vh;
-        text-align: center;
-    }
-
-    .fof {
-        display: table-cell;
-        vertical-align: middle;
-    }
-
-    .fof h1 {
-        font-size: 50px;
-        display: inline-block;
-        padding-right: 12px;
-        animation: type 0.5s alternate infinite;
-    }
-
-    @keyframes type {
-        from {
-            box-shadow: inset -3px 0px 0px #888;
+async function handleRequestAndRespond(req, res) {
+    try {
+        if (!req.query.src) {
+            console.error('Error 404');
+            app.use('/error', express.static('error'));
+            res.status(404).sendFile(__dirname + "/error/error.html");
+            return;
         }
 
-        to {
-            box-shadow: inset -3px 0px 0px transparent;
+        const response = await axios.get(req.query.src);
+
+        if (!isObjectEmpty(response.headers['content-type'])) {
+            console.log(response.headers['content-type']);
+            res.setHeader('Content-Type', response.headers['content-type']);
         }
+
+        if (!isObjectEmpty(req.query.dt) && req.query.dt == 1) {
+            res.send(response.data.replace('\\f113', "url(https://cdn.discordapp.com/emojis/1150109708338864218.webp?size=24&quality=lossless)"));
+        } else {
+            res.send(response.data);
+        }
+    } catch (error) {
+        console.error(error);
+        let statusCode = 500;
+        if (error.response) {
+            statusCode = error.response.status;
+        } else if (error.code === 'ECONNREFUSED') {
+            statusCode = 503;
+        }
+
+        app.use('/error', express.static('error'));
+        app.use('/assets', express.static('assets'));
+        res.status(statusCode).sendFile(__dirname + "/error/error.html");
     }
-    </style>`; 
-    res.status(404).send(page);
-  }
-});
+}
+
+function isObjectEmpty(obj) {
+    if (obj == null) return true;
+    if (obj.length && obj.length > 0) return false;
+    if (obj.length === 0) return true;
+    return true;
+}
 
 app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+    console.log(`Server is running on port ${port}`);
 });

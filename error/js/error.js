@@ -1,0 +1,1 @@
+fetch(location.href).then(response => document.getElementById('error').innerHTML = `Error ${response.status}`);

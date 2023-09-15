@@ -10,4 +10,5 @@ micros:
       - npm run build
     include:
       - node_modules
+      - error
     run: "node index.js"
