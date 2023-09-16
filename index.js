@@ -1,33 +1,39 @@
 const express = require('express');
 const axios = require('axios');
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
-// ✔️ Path example: http://localhost:3000/?src=https://cdn.jsdelivr.net/npm/eruda
-// ❌ Path example: http://localhost:3000/?src=https://cdn.jsdelivr.net/npm/eruda
-app.get('/:type?', handleRequestAndRespond);
+app.use('/error', express.static('error'));
+app.use('/assets', express.static('assets'));
+app.get('/favicon.ico', (req, res) => res.sendFile(__dirname + "/assets/icon/favicon.ico"));
+
+// ✔️ Path example: http://localhost:3000/?src=https://cdn.jsdelivr.net/npm/eruda&dt&rn=
+// ✔️ Path example: http://localhost:3000/type here whatever you want/?src=https://cdn.jsdelivr.net/npm/eruda&dt&rn=
+app.get('/:obfuscationString?', handleRequestAndRespond);
 
 async function handleRequestAndRespond(req, res) {
     try {
-        if (!req.query.src) {
-            console.error('Error 404');
-            app.use('/error', express.static('error'));
-            res.status(404).sendFile(__dirname + "/error/error.html");
+        const src = req.query.src;
+        let statusCode = 200;
+        if (!src) {
+            statusCode = 400;
+            res.status(statusCode).sendFile(__dirname + "/error/error.html");
             return;
         }
-
-        const response = await axios.get(req.query.src);
-
-        if (!isObjectEmpty(response.headers['content-type'])) {
-            console.log(response.headers['content-type']);
+        const response = await axios.get(src);
+        let data = response.data;
+        if (response.headers['content-type']) {
             res.setHeader('Content-Type', response.headers['content-type']);
         }
-
-        if (!isObjectEmpty(req.query.dt) && req.query.dt == 1) {
-            res.send(response.data.replace('\\f113', "url(https://cdn.discordapp.com/emojis/1150109708338864218.webp?size=24&quality=lossless)"));
-        } else {
-            res.send(response.data);
+        if (req.query['inj']) {
+            // Add code that loops through the query parameter array
+            // and replaces all thats indicated
+            data = data.replace('(function () {!function(e,t)', "!function(e,t)");
+            data = data.replace('(function () {!function(e,t)', "!function(e,t)");
+            data = "(function () {" + data + "eruda.init();})();";
+            console.log('Injected custom code!');
         }
+        res.send(data);
     } catch (error) {
         console.error(error);
         let statusCode = 500;
@@ -36,18 +42,8 @@ async function handleRequestAndRespond(req, res) {
         } else if (error.code === 'ECONNREFUSED') {
             statusCode = 503;
         }
-
-        app.use('/error', express.static('error'));
-        app.use('/assets', express.static('assets'));
         res.status(statusCode).sendFile(__dirname + "/error/error.html");
     }
-}
-
-function isObjectEmpty(obj) {
-    if (obj == null) return true;
-    if (obj.length && obj.length > 0) return false;
-    if (obj.length === 0) return true;
-    return true;
 }
 
 app.listen(port, () => {
