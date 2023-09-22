@@ -64,7 +64,7 @@ GET http://localhost:3000
 /your-obfuscation-string
 ?src=https://https://cdn.jsdelivr.net/npm/jquery
 &inj=target string,replace with this text
-,second target string,replace with this second text
+|second target string,replace with this second text
 ```
 In this example, `your-obfuscation-string` is a placeholder for your obfuscation string, and the `src` and `inj` parameters define the source URL and injection parameters, respectively.
 
