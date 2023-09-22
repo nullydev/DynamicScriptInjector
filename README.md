@@ -48,25 +48,29 @@ To use this project, follow these steps:
 
 The API endpoint is structured as follows:
 > ```ruby
-> GET http://localhost:3000/:obfuscationString?src=:sourceURL&inj=:injectionParameters
+> GET http://localhost:3000/:obfuscationString?src=:sourceURL&o=:oldString&n=:newString
 > ```
 - `:obfuscationString` (optional): An optional parameter for obfuscation purposes. You can add a random string here `(without slashes "/")` to make the API endpoint less predictable. This parameter does not affect the API's functionality.
 
 ### **Query Parameters**
 `src=:sourceURL:` The URL of the JavaScript library you want to fetch and modify.
 
-`inj=:injectionParameters:` Comma-separated injection parameters that define how you want to modify the library. Each injection parameter should follow this format: `originalResource,newResource`. You can use multiple injection parameters to rename or redirect resources within the fetched library.
+`o=:oldString:` The old string you want to replace within the fetched library.
+
+`n=:newString:` The new string you want to replace the old string with within the fetched library.
 
 ## **Example**
 Let's say you want to inject custom code into the "jquery" library fetched from "**https://cdn.jsdelivr.net/npm/jquery**". You also want to rename some resources. Here's how you can structure the API call:
 ```ruby
 GET http://localhost:3000
 /your-obfuscation-string
-?src=https://https://cdn.jsdelivr.net/npm/jquery
-&inj=target string,replace with this text
-|second target string,replace with this second text
+?src=https://cdn.jsdelivr.net/npm/jquery
+&o=jQuery
+&n=My name
+&o=/jquery\.org\/license/g
+&n=example.org/NeverRemoveALicense
 ```
-In this example, `your-obfuscation-string` is a placeholder for your obfuscation string, and the `src` and `inj` parameters define the source URL and injection parameters, respectively.
+In this example, `your-obfuscation-string` is a placeholder for your obfuscation string, and the `src`, `o`, and `n` parameters define the source URL and injection parameters, respectively.
 
 ## **Error Handling**
 The application includes a custom 404 error page with a CSS-based animated text effect. This error page is displayed when:
@@ -82,4 +86,4 @@ The application includes a custom 404 error page with a CSS-based animated text 
 Contributions to this project are welcome! If you have any suggestions, improvements, or bug fixes, please submit an issue or a pull request.
 
 ## **License**
-This project is licensed under the MIT License.
+This project is licensed under the [MIT](https://github.com/nullydev/DynamicScriptInjector/blob/main/LICENSE) License.
